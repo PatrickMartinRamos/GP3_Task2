@@ -1179,7 +1179,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  raycastDistance: 6
+  pickUpDistance: 10
+  pullDistance: 15
   headPos: {fileID: 1433164917}
   isHoldingFruit: 0
   pickUPTxt: {fileID: 1627792973}

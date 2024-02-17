@@ -136,6 +136,24 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""pull"",
+                    ""type"": ""Button"",
+                    ""id"": ""334000a7-aa0b-4941-9f7b-2c028281b84e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""push"",
+                    ""type"": ""Button"",
+                    ""id"": ""542d6fda-9a3d-40b4-9eb0-057e58f05098"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -160,6 +178,28 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""action"": ""putDown"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2c130586-add8-419e-9daa-bcd0c53e7be9"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""pull"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""18537a1f-a86b-41e2-9e54-e1de3dc06749"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""push"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -174,6 +214,8 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Interact = asset.FindActionMap("Interact", throwIfNotFound: true);
         m_Interact_pickUp = m_Interact.FindAction("pickUp", throwIfNotFound: true);
         m_Interact_putDown = m_Interact.FindAction("putDown", throwIfNotFound: true);
+        m_Interact_pull = m_Interact.FindAction("pull", throwIfNotFound: true);
+        m_Interact_push = m_Interact.FindAction("push", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -291,12 +333,16 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private List<IInteractActions> m_InteractActionsCallbackInterfaces = new List<IInteractActions>();
     private readonly InputAction m_Interact_pickUp;
     private readonly InputAction m_Interact_putDown;
+    private readonly InputAction m_Interact_pull;
+    private readonly InputAction m_Interact_push;
     public struct InteractActions
     {
         private @PlayerInputs m_Wrapper;
         public InteractActions(@PlayerInputs wrapper) { m_Wrapper = wrapper; }
         public InputAction @pickUp => m_Wrapper.m_Interact_pickUp;
         public InputAction @putDown => m_Wrapper.m_Interact_putDown;
+        public InputAction @pull => m_Wrapper.m_Interact_pull;
+        public InputAction @push => m_Wrapper.m_Interact_push;
         public InputActionMap Get() { return m_Wrapper.m_Interact; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -312,6 +358,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @putDown.started += instance.OnPutDown;
             @putDown.performed += instance.OnPutDown;
             @putDown.canceled += instance.OnPutDown;
+            @pull.started += instance.OnPull;
+            @pull.performed += instance.OnPull;
+            @pull.canceled += instance.OnPull;
+            @push.started += instance.OnPush;
+            @push.performed += instance.OnPush;
+            @push.canceled += instance.OnPush;
         }
 
         private void UnregisterCallbacks(IInteractActions instance)
@@ -322,6 +374,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @putDown.started -= instance.OnPutDown;
             @putDown.performed -= instance.OnPutDown;
             @putDown.canceled -= instance.OnPutDown;
+            @pull.started -= instance.OnPull;
+            @pull.performed -= instance.OnPull;
+            @pull.canceled -= instance.OnPull;
+            @push.started -= instance.OnPush;
+            @push.performed -= instance.OnPush;
+            @push.canceled -= instance.OnPush;
         }
 
         public void RemoveCallbacks(IInteractActions instance)
@@ -348,5 +406,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     {
         void OnPickUp(InputAction.CallbackContext context);
         void OnPutDown(InputAction.CallbackContext context);
+        void OnPull(InputAction.CallbackContext context);
+        void OnPush(InputAction.CallbackContext context);
     }
 }

@@ -8,8 +8,12 @@ public class PlayerMovements : MonoBehaviour
 {
     //public Var
     [SerializeField] float moveSpeed;
-    [SerializeField] float raycastDistance = 10f;
+    [SerializeField] float pickUpDistance = 10f;
+    [SerializeField] float pullDistance = 15f;
     [SerializeField] Transform headPos;
+    [SerializeField] float pullSpeed = 10f;
+    [SerializeField] float pushSpeed = 10f;
+    [SerializeField] float followSpeed = 10f;
 
     //input System
     PlayerInputs playerInputs;
@@ -20,9 +24,12 @@ public class PlayerMovements : MonoBehaviour
     //interact
     bool isPickUp = false;
     bool isPutDown = false;
+    bool isPulling = false;
+    bool isPushing = false;
 
     //system var
     [SerializeField] bool isHoldingFruit = false;
+    [SerializeField] bool isPullingObject = false;
     private GameObject heldFruit;
 
     //text UI
@@ -39,7 +46,7 @@ public class PlayerMovements : MonoBehaviour
         Cursor.visible = false;
 
     }
-
+    #region Inputs
     private void OnEnable()
     {
         if (playerInputs == null)
@@ -54,6 +61,10 @@ public class PlayerMovements : MonoBehaviour
 
             playerInputs.Interact.putDown.performed += i => isPutDown = true;
             playerInputs.Interact.putDown.canceled += i => isPutDown = false;
+
+            playerInputs.Interact.pull.performed += i => isPulling = true;
+
+            playerInputs.Interact.push.performed += i => isPushing = true;
         }
         playerInputs.Enable();
     }
@@ -69,14 +80,19 @@ public class PlayerMovements : MonoBehaviour
 
             playerInputs.Interact.putDown.performed -= i => isPutDown = true;
             playerInputs.Interact.putDown.canceled -= i => isPutDown = false;
+
+            playerInputs.Interact.pull.performed += i => isPulling = true;
+
+            playerInputs.Interact.push.performed += i => isPushing = true;
         }
         playerInputs.Disable();
     }
-
+    #endregion
     private void Update()
     {
         MovePlayer();
         handlepickupandputdown();
+        PullandPush();
 
         if (isHoldingFruit)
         {
@@ -84,8 +100,12 @@ public class PlayerMovements : MonoBehaviour
             heldFruit.transform.position = headPos.position + Camera.main.transform.forward * 3.5f;
             Debug.Log("Currently holding: " + heldFruit.name);
         }
+        if (isPullingObject)
+        {
+    
+        }
     }
-
+    #region Movement
     void MovePlayer()
     {
         Vector3 movement = new Vector3(runAction.x, 0f, runAction.y);
@@ -96,7 +116,8 @@ public class PlayerMovements : MonoBehaviour
 
         rb.velocity = new Vector3(moveDir.x * moveSpeed, rb.velocity.y, moveDir.z * moveSpeed);
     }
-
+    #endregion
+    #region PickUP and PutDown
     private void handlepickupandputdown()
     {
         // Cast a ray from the player head position in the direction they are looking
@@ -104,12 +125,12 @@ public class PlayerMovements : MonoBehaviour
         RaycastHit hit;
 
         // Check if the ray hits something
-        if (Physics.Raycast(ray, out hit, raycastDistance))
+        if (Physics.Raycast(ray, out hit, pickUpDistance))
         {
             // Visualize the ray as a line
-            Debug.DrawLine(ray.origin, hit.point, Color.green);
+           // Debug.DrawLine(ray.origin, hit.point, Color.green);
 
-            Debug.Log("Hit object: " + hit.collider.gameObject.name);
+          //  Debug.Log("Hit object: " + hit.collider.gameObject.name);
             
             if (hit.collider.CompareTag("Fruit") && !isHoldingFruit)
             {
@@ -118,7 +139,7 @@ public class PlayerMovements : MonoBehaviour
                 // Check if the pick up action is performed
                 if (isPickUp)
                 {
-                    Debug.Log("Fruit picked up: " + hit.collider.gameObject.name);
+                   // Debug.Log("Fruit picked up: " + hit.collider.gameObject.name);
 
                     // Set the player as holding a fruit
                     isHoldingFruit = true;
@@ -134,7 +155,7 @@ public class PlayerMovements : MonoBehaviour
         else
         {
             // If the ray doesn't hit anything, visualize it as a line up to the specified distance
-            Debug.DrawLine(ray.origin, ray.origin + ray.direction * raycastDistance, Color.green);
+            Debug.DrawLine(ray.origin, ray.origin + ray.direction * pickUpDistance, Color.green);
             pickUPTxt.gameObject.SetActive(false);
             putDownTxt.gameObject.SetActive(false);
         }
@@ -147,7 +168,7 @@ public class PlayerMovements : MonoBehaviour
             {
                 isHoldingFruit = false;
                 heldFruit.GetComponent<Rigidbody>().isKinematic = false;
-                Debug.Log("Fruit put down");
+              //  Debug.Log("Fruit put down");
 
                 heldFruit = null;
 
@@ -157,9 +178,50 @@ public class PlayerMovements : MonoBehaviour
             else
             {
                 putDownTxt.gameObject.SetActive(false);
-                Debug.Log("Cannot put down. Player is not holding a fruit.");
+               // Debug.Log("Cannot put down. Player is not holding a fruit.");
             }
         }
     }
+    #endregion
+    #region  Push and Pull
+    public void PullandPush()
+    {
+        Ray pullRay = new Ray(headPos.position, Camera.main.transform.forward);
+        RaycastHit hit;
+
+        if(Physics.Raycast(pullRay, out hit, pullDistance))
+        {
+           if(hit.collider.CompareTag("Fruit") && !isHoldingFruit)
+            {
+                if(isPulling)
+                {
+                    isPullingObject = true;
+
+                    heldFruit = hit.collider.gameObject;
+                    heldFruit.GetComponent<Rigidbody>().isKinematic = true;
+
+                    // Calculate the direction from the object to the head position
+                    Vector3 directionToHead = headPos.position - heldFruit.transform.position;
+
+                    // Calculate the target position with a certain distance from the head
+                    Vector3 targetPosition = headPos.position - directionToHead.normalized * 5.0f;
+
+                    // Move the object towards the target position
+                    heldFruit.transform.position = Vector3.MoveTowards(heldFruit.transform.position, targetPosition, pullSpeed * Time.deltaTime);
+                }
+                //Debug.Log("pullable");
+            }
+
+           if(isPushing && isPullingObject)
+            {
+                Debug.Log("ready to push");
+            }
+            else
+            {
+                Debug.Log("false");
+            }
+        }
+    }
+    #endregion
 
 }
